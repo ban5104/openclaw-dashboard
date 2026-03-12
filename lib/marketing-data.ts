@@ -18,6 +18,7 @@ import type {
   CalendarEntry,
   ContentItem,
   ContentState,
+  ImageCandidate,
   Platform,
   SettingsCheck,
 } from "@/types/content";
@@ -26,9 +27,10 @@ type DbContentItem = Prisma.ContentItemGetPayload<{
   include: {
     business: true;
     currentVersion: true;
-    versions: { orderBy: { versionNumber: "desc" } };
-    reviewRecords: { orderBy: { createdAt: "desc" } };
-    auditEvents: { orderBy: { createdAt: "desc" } };
+    assetMatches: { include: { asset: true } };
+    versions: true;
+    reviewRecords: true;
+    auditEvents: true;
   };
 }>;
 
@@ -107,7 +109,7 @@ function mapVersion(item: {
   visualNotes: string | null;
   altHooks: string[];
   metadata: Prisma.JsonValue;
-}) {
+}, imageCandidates: ImageCandidate[] = []) {
   const metadata =
     item.metadata && typeof item.metadata === "object" && !Array.isArray(item.metadata)
       ? (item.metadata as Record<string, Prisma.JsonValue>)
@@ -123,6 +125,7 @@ function mapVersion(item: {
     cta: "See brief",
     visualNotes: item.visualNotes ?? undefined,
     altHooks: item.altHooks,
+    imageCandidates,
     excerpt: item.body.slice(0, 220),
   };
 }
@@ -150,6 +153,18 @@ function mapReview(review: DbContentItem["reviewRecords"][number]) {
 
 function mapContentItem(item: DbContentItem, businessSlug?: string): ContentItem {
   const latestReview = item.reviewRecords[0];
+  const imageCandidates: ImageCandidate[] = item.assetMatches.map((match) => ({
+    id: match.asset.id,
+    title: match.asset.title,
+    assetUrl: match.asset.assetUrl,
+    thumbnailUrl: match.asset.thumbnailUrl ?? undefined,
+    caption: match.asset.caption ?? undefined,
+    tags: match.asset.tags,
+    rank: match.rank,
+    score: Number(match.similarityScore.toFixed(3)),
+    rationale: match.rationale ?? undefined,
+    selected: match.selected,
+  }));
   const briefTopic = extractBriefField(item.brief, "topic");
   const briefMessage = extractBriefField(item.brief, "key_message");
   const briefAudience = extractBriefField(item.brief, "target_audience");
@@ -178,18 +193,21 @@ function mapContentItem(item: DbContentItem, businessSlug?: string): ContentItem
     reviewerNote: latestReview?.revisionNotes ?? undefined,
     currentVersion: {
       ...(item.currentVersion
-        ? mapVersion(item.currentVersion)
+        ? mapVersion(item.currentVersion, imageCandidates)
         : {
             id: `brief-${item.id}`,
             label: "Brief only",
             wordCount: 0,
             hook: fallbackText(title),
             cta: cta || "No CTA set",
+            imageCandidates,
             excerpt: "Awaiting draft generation.",
           }),
+      imageCandidates,
     },
+    selectedAsset: imageCandidates.find((candidate) => candidate.selected),
     review: latestReview ? mapReview(latestReview) : { verdict: "REVISE", confidence: "low", reviewer: "Reviewer", createdAt: "Pending" },
-    versions: item.versions.map(mapVersion),
+    versions: item.versions.map((version) => mapVersion(version)),
     reviews: item.reviewRecords.map(mapReview),
     audit: item.auditEvents.map((event) => ({
       id: event.id,
@@ -267,6 +285,10 @@ export async function getContentItems(slug = "nelsonai") {
           include: {
             business: true,
             currentVersion: true,
+            assetMatches: {
+              include: { asset: true },
+              orderBy: [{ selected: "desc" }, { rank: "asc" }],
+            },
             versions: {
               orderBy: { versionNumber: "desc" },
             },
@@ -333,6 +355,10 @@ export async function getContentItemById(id: string) {
       include: {
         business: true,
         currentVersion: true,
+        assetMatches: {
+          include: { asset: true },
+          orderBy: [{ selected: "desc" }, { rank: "asc" }],
+        },
         versions: {
           orderBy: { versionNumber: "desc" },
         },
@@ -518,6 +544,11 @@ export async function getSettingsChecks(slug = "nelsonai") {
         label: "Telegram notifier",
         value: process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID ? "Configured" : "Missing config",
         tone: process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID ? "success" : "warning",
+      },
+      {
+        label: "Gemini image matching",
+        value: process.env.GEMINI_API_KEY && process.env.GEMINI_EMBEDDING_MODEL ? "Configured" : "Lexical fallback",
+        tone: process.env.GEMINI_API_KEY && process.env.GEMINI_EMBEDDING_MODEL ? "success" : "neutral",
       },
       {
         label: "Admin auth",

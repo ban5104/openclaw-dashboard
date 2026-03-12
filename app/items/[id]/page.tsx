@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Clock3, ExternalLink, GitBranchPlus, MessageSquareText } from "lucide-react";
 import { CollectAnalyticsButton } from "@/components/marketing/collect-analytics-button";
+import { GenerateImageCandidatesButton } from "@/components/marketing/generate-image-candidates-button";
 import { ItemTransitionActions } from "@/components/marketing/item-transition-actions";
 import { PageIntro } from "@/components/marketing/page-intro";
 import { PublishDraftButton } from "@/components/marketing/publish-draft-button";
@@ -71,6 +73,43 @@ export default async function ItemDetailPage({
                   Open draft <ExternalLink className="ml-1 inline h-3.5 w-3.5" />
                 </a>
               ) : null}
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[1.5rem] border p-5" style={{ borderColor: "var(--border)" }}>
+            <p className="eyebrow">Image direction</p>
+            <p className="mt-3 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
+              {item.currentVersion.visualNotes ?? "No visual direction captured yet."}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              {(item.currentVersion.imageCandidates ?? []).map((candidate) => (
+                <article key={candidate.id} className="w-full max-w-[18rem] overflow-hidden rounded-[1.2rem] border" style={{ borderColor: "var(--border)" }}>
+                  <Image
+                    src={candidate.thumbnailUrl ?? candidate.assetUrl}
+                    alt={candidate.title}
+                    width={720}
+                    height={405}
+                    unoptimized
+                    className="h-32 w-full object-cover"
+                  />
+                  <div className="p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold">{candidate.title}</p>
+                      <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                        #{candidate.rank}
+                      </span>
+                    </div>
+                    {candidate.caption ? (
+                      <p className="mt-2 text-xs leading-5" style={{ color: "var(--text-secondary)" }}>
+                        {candidate.caption}
+                      </p>
+                    ) : null}
+                    <p className="mt-2 text-xs" style={{ color: "var(--text-muted)" }}>
+                      Match score: {candidate.score.toFixed(2)}
+                    </p>
+                  </div>
+                </article>
+              ))}
             </div>
           </div>
 
@@ -156,6 +195,7 @@ export default async function ItemDetailPage({
               <p>Revision cycles: {item.revisionCount ?? 0}</p>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
+              <GenerateImageCandidatesButton itemId={item.id} />
               {item.state === "approved" ? <PublishDraftButton itemId={item.id} /> : null}
               {item.platformUrl || item.platformPostUrl ? <CollectAnalyticsButton itemId={item.id} /> : null}
             </div>

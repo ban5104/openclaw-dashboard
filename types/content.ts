@@ -54,7 +54,21 @@ export interface VersionRecord {
   cta: string;
   visualNotes?: string;
   altHooks?: string[];
+  imageCandidates?: ImageCandidate[];
   excerpt: string;
+}
+
+export interface ImageCandidate {
+  id: string;
+  title: string;
+  assetUrl: string;
+  thumbnailUrl?: string;
+  caption?: string;
+  tags: string[];
+  rank: number;
+  score: number;
+  rationale?: string;
+  selected?: boolean;
 }
 
 export interface AuditEvent {
@@ -85,6 +99,7 @@ export interface ContentItem {
   platformPostUrl?: string;
   reviewerNote?: string;
   currentVersion: VersionRecord;
+  selectedAsset?: ImageCandidate;
   review: ReviewRecord;
   versions?: VersionRecord[];
   reviews?: ReviewRecord[];

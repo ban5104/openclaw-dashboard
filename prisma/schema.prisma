@@ -68,6 +68,18 @@ enum PlatformAction {
   deleted
 }
 
+enum CreativeAssetSource {
+  owned
+  past_post
+  reference
+  stock
+}
+
+enum CreativeAssetStatus {
+  active
+  archived
+}
+
 model Business {
   id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                String              @unique
@@ -86,6 +98,7 @@ model Business {
   auditEvents         AuditEvent[]
   brandProfiles       BrandProfile[]
   contentItems        ContentItem[]
+  creativeAssets      CreativeAsset[]
   notificationEvents  NotificationEvent[]
 
   @@map("businesses")
@@ -133,6 +146,7 @@ model ContentItem {
   currentVersion    ContentVersion?       @relation("CurrentVersion", fields: [currentVersionId], references: [id], onDelete: SetNull)
   versions          ContentVersion[]      @relation("ItemVersions")
   notificationEvents NotificationEvent[]
+  assetMatches      ContentAssetMatch[]
   platformPublications PlatformPublication[]
   reviewRecords     ReviewRecord[]
 
@@ -158,6 +172,7 @@ model ContentVersion {
   createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   contentItem      ContentItem    @relation("ItemVersions", fields: [contentItemId], references: [id], onDelete: Cascade)
   currentForItems  ContentItem[]  @relation("CurrentVersion")
+  assetMatches     ContentAssetMatch[]
   reviewRecords    ReviewRecord[]
 
   @@unique([contentItemId, versionNumber])
@@ -201,6 +216,51 @@ model PlatformPublication {
   contentItem   ContentItem    @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
 
   @@map("platform_publications")
+}
+
+model CreativeAsset {
+  id                   String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  businessId           String              @map("business_id") @db.Uuid
+  sourceType           CreativeAssetSource @default(owned) @map("source_type")
+  status               CreativeAssetStatus @default(active)
+  title                String
+  assetUrl             String              @map("asset_url")
+  thumbnailUrl         String?             @map("thumbnail_url")
+  mimeType             String?             @map("mime_type")
+  caption              String?
+  tags                 String[]            @default([])
+  platformHints        Json                @default("{}") @map("platform_hints")
+  embeddingModel       String?             @map("embedding_model")
+  embedding            Json?
+  embeddingGeneratedAt DateTime?           @map("embedding_generated_at") @db.Timestamptz(6)
+  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  business             Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  assetMatches         ContentAssetMatch[]
+
+  @@unique([businessId, assetUrl])
+  @@index([businessId, status], map: "idx_creative_assets_business_status")
+  @@map("creative_assets")
+}
+
+model ContentAssetMatch {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contentItemId   String         @map("content_item_id") @db.Uuid
+  contentVersionId String        @map("content_version_id") @db.Uuid
+  assetId         String         @map("asset_id") @db.Uuid
+  rank            Int
+  similarityScore Float          @map("similarity_score")
+  rationale       String?
+  selected        Boolean        @default(false)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  asset           CreativeAsset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  contentItem     ContentItem    @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  contentVersion  ContentVersion @relation(fields: [contentVersionId], references: [id], onDelete: Cascade)
+
+  @@unique([contentVersionId, assetId])
+  @@unique([contentVersionId, rank])
+  @@index([contentItemId, createdAt], map: "idx_content_asset_matches_item_time")
+  @@map("content_asset_matches")
 }
 
 model AnalyticsSnapshot {

@@ -68,6 +68,8 @@ FACEBOOK_PAGE_ACCESS_TOKEN=
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
 TELEGRAM_WEBHOOK_SECRET=
+GEMINI_API_KEY=
+GEMINI_EMBEDDING_MODEL=
 ```
 
 These same environment values are also required by the repo-shipped OpenClaw skills under `openclaw/workspaces/marketing-ops/skills/` when you run them against a live OpenClaw install.

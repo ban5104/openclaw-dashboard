@@ -197,6 +197,48 @@ async function main() {
       insights: "Leadership-readiness content is outperforming generic AI updates.",
     },
   });
+
+  const creativeAssets = [
+    {
+      title: "Executive with workflow overlay",
+      assetUrl: "https://placehold.co/1200x675/png?text=Executive+Workflow",
+      caption: "Professional executive portrait with a subtle operations dashboard and process overlay.",
+      tags: ["executive", "workflow", "dashboard", "professional"],
+      sourceType: "owned",
+    },
+    {
+      title: "Team workshop whiteboard",
+      assetUrl: "https://placehold.co/1200x675/png?text=Team+Workshop",
+      caption: "Leadership team workshop around a whiteboard discussing AI adoption and process changes.",
+      tags: ["leadership", "whiteboard", "team", "ai-adoption"],
+      sourceType: "reference",
+    },
+    {
+      title: "Operator at analytics desk",
+      assetUrl: "https://placehold.co/1200x675/png?text=Analytics+Desk",
+      caption: "Operations lead reviewing marketing analytics and workflow KPIs on a laptop.",
+      tags: ["analytics", "operations", "kpi", "laptop"],
+      sourceType: "past_post",
+    },
+  ];
+
+  await Promise.all(
+    creativeAssets.map((asset) =>
+      prisma.creativeAsset.upsert({
+        where: {
+          businessId_assetUrl: {
+            businessId: business.id,
+            assetUrl: asset.assetUrl,
+          },
+        },
+        update: asset,
+        create: {
+          businessId: business.id,
+          ...asset,
+        },
+      }),
+    ),
+  );
 }
 
 main()
