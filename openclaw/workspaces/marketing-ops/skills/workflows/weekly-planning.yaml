@@ -1,0 +1,42 @@
+name: weekly-planning
+description: Generate content plan for the upcoming week
+args:
+  business_id:
+    required: true
+
+steps:
+  - id: collect-analytics
+    command: >
+      openclaw.invoke --tool analytics-collector --action weekly-summary
+      --args-json '{"business_id": "$LOBSTER_ARG_BUSINESS_ID"}'
+
+  - id: load-brand
+    command: >
+      openclaw.invoke --tool brand-context-builder
+      --args-json '{"business_id": "$LOBSTER_ARG_BUSINESS_ID"}'
+
+  - id: generate-plan
+    command: >
+      openclaw.invoke --tool sessions_spawn --action spawn
+      --args-json '{
+        "task": "strategy-planning",
+        "context": {
+          "analytics": "$collect-analytics.stdout",
+          "brand_context": "$load-brand.stdout",
+          "current_week": "auto"
+        }
+      }'
+
+  - id: create-content-items
+    command: >
+      openclaw.invoke --tool db-state-manager --action bulk-create-items
+    stdin: $generate-plan.stdout
+    approval: required
+
+  - id: notify-plan-ready
+    command: >
+      openclaw.invoke --tool telegram-notifier --action send
+      --args-json '{
+        "event_type": "weekly_plan_ready",
+        "business_id": "$LOBSTER_ARG_BUSINESS_ID"
+      }'

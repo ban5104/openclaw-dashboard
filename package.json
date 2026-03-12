@@ -14,12 +14,14 @@
     "prisma:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.mjs",
+    "openclaw:sync": "bash scripts/sync-openclaw.sh",
     "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.16.1",
     "lucide-react": "^0.562.0",
     "next": "^16.1.6",
+    "pg": "^8.16.3",
     "prisma": "^6.16.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"

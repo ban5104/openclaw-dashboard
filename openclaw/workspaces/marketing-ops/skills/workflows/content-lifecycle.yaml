@@ -1,0 +1,81 @@
+name: content-lifecycle
+description: Move a content item from briefed through to platform draft and notification
+args:
+  content_item_id:
+    required: true
+    description: UUID of the content item to process
+  business_id:
+    required: true
+  platform:
+    required: true
+    description: linkedin | facebook
+  max_revisions:
+    default: 2
+
+steps:
+  - id: load-context
+    command: >
+      openclaw.invoke --tool db-state-manager --action read
+      --args-json '{"table": "content_items", "id": "$LOBSTER_ARG_CONTENT_ITEM_ID"}'
+
+  - id: build-brand-context
+    command: >
+      openclaw.invoke --tool brand-context-builder
+      --args-json '{"business_id": "$LOBSTER_ARG_BUSINESS_ID"}'
+
+  - id: generate-draft
+    command: >
+      openclaw.invoke --tool sessions_spawn --action spawn
+      --args-json '{
+        "task": "content-writer",
+        "model": "anthropic/claude-sonnet-4-20250514",
+        "context": {
+          "brief": "$load-context.stdout.brief",
+          "brand_context": "$build-brand-context.stdout",
+          "platform": "$LOBSTER_ARG_PLATFORM"
+        }
+      }'
+
+  - id: save-draft
+    command: >
+      openclaw.invoke --tool db-state-manager --action create-version
+      --args-json '{"content_item_id": "$LOBSTER_ARG_CONTENT_ITEM_ID"}'
+    stdin: $generate-draft.stdout
+
+  - id: review-draft
+    command: >
+      openclaw.invoke --tool sessions_spawn --action spawn
+      --args-json '{
+        "task": "reviewer",
+        "model": "anthropic/claude-sonnet-4-20250514",
+        "context": {
+          "draft": "$generate-draft.stdout",
+          "brand_context": "$build-brand-context.stdout"
+        }
+      }'
+
+  - id: save-review
+    command: >
+      openclaw.invoke --tool db-state-manager --action save-review
+      --args-json '{"content_item_id": "$LOBSTER_ARG_CONTENT_ITEM_ID"}'
+    stdin: $review-draft.stdout
+
+  - id: check-approval
+    command: >
+      echo "$review-draft.stdout" | jq -r '.outcome'
+
+  - id: publish-draft
+    command: >
+      openclaw.invoke --tool ${LOBSTER_ARG_PLATFORM}-publisher --action create-draft
+      --args-json '{"content_item_id": "$LOBSTER_ARG_CONTENT_ITEM_ID"}'
+    condition: $check-approval.stdout == "pass"
+    approval: required
+
+  - id: notify-ben
+    command: >
+      openclaw.invoke --tool telegram-notifier --action send
+      --args-json '{
+        "event_type": "draft_ready",
+        "content_item_id": "$LOBSTER_ARG_CONTENT_ITEM_ID"
+      }'
+    condition: $publish-draft.exitCode == 0

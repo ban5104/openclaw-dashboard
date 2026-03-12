@@ -1,6 +1,6 @@
 # Marketing Operations Dashboard
 
-A Next.js dashboard for the marketing operations system described in [spec.md](/Users/ben/projects/Dashboard-OpenClaw/spec.md). It keeps the upstream OpenClaw gateway client and ops/admin pages, while adding a Postgres-backed content pipeline, approval inbox, analytics views, and business settings.
+A Next.js dashboard for the marketing operations system described in [`spec.md`](./spec.md). It keeps the upstream OpenClaw gateway client and ops/admin pages, while adding a Postgres-backed content pipeline, approval inbox, analytics views, and business settings.
 
 ## What This Repo Owns
 
@@ -12,10 +12,21 @@ A Next.js dashboard for the marketing operations system described in [spec.md](/
 
 ## What This Repo Does Not Own
 
-- OpenClaw workspace files and agent setup in `~/.openclaw/...`
-- Lobster workflow execution
-- Publisher/analytics skills that talk to LinkedIn, Facebook, or Telegram directly
+- The live OpenClaw installation in `~/.openclaw/...`
+- Lobster workflow execution runtime
 - Production infra and secrets management
+
+## OpenClaw Templates Included In This Repo
+
+The repo now includes spec-aligned OpenClaw scaffolding under `openclaw/` so the dashboard and agent setup can ship together:
+
+- `openclaw/config/marketing-ops.config.json5` — gateway config template
+- `openclaw/workspaces/marketing-ops/` — orchestrator workspace files
+- `openclaw/workspaces/marketing-ops/businesses/nelsonai/` — NelsonAI brand/context files
+- `openclaw/workspaces/marketing-ops/skills/` — repo-shipped OpenClaw skills for brand context, publishers, analytics, notifications, and DB state
+- `openclaw/workspaces/marketing-ops/skills/workflows/` — Lobster workflow YAML scaffolds
+
+These are templates/source-controlled assets. Copy or sync them into `~/.openclaw/` for a live install.
 
 ## Stack
 
@@ -30,6 +41,12 @@ A Next.js dashboard for the marketing operations system described in [spec.md](/
 ```bash
 npm install
 cp .env.example .env.local
+```
+
+To sync the repo's OpenClaw templates into a local install:
+
+```bash
+npm run openclaw:sync
 ```
 
 Required environment values:
@@ -52,6 +69,8 @@ TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
 TELEGRAM_WEBHOOK_SECRET=
 ```
+
+These same environment values are also required by the repo-shipped OpenClaw skills under `openclaw/workspaces/marketing-ops/skills/` when you run them against a live OpenClaw install.
 
 ## Database
 

@@ -1,0 +1,69 @@
+{
+  agents: {
+    defaults: {
+      model: "anthropic/claude-sonnet-4-20250514",
+      subagents: {
+        maxSpawnDepth: 2,
+        maxChildrenPerAgent: 5,
+        maxConcurrent: 4,
+        runTimeoutSeconds: 300
+      }
+    },
+    list: [
+      {
+        id: "orchestrator",
+        name: "Marketing Ops Orchestrator",
+        default: true,
+        workspace: "~/.openclaw/workspaces/marketing-ops",
+        agentDir: "~/.openclaw/agents/orchestrator/agent",
+        model: "anthropic/claude-sonnet-4-20250514",
+        heartbeat: {
+          every: "30m",
+          activeHours: {
+            start: "08:00",
+            end: "22:00",
+            timezone: "America/New_York"
+          },
+          target: "telegram",
+          lightContext: true,
+          prompt: "Run your heartbeat checklist from HEARTBEAT.md. Use the db-state-manager skill to check content states. If nothing needs attention, return HEARTBEAT_OK."
+        },
+        tools: {
+          allow: ["read", "write", "exec", "sessions_spawn", "subagents"],
+          deny: ["gateway"]
+        }
+      }
+    ]
+  },
+  channels: {
+    telegram: {
+      accounts: {
+        marketing_ops: {
+          // Configure token/credentials locally before enabling.
+        }
+      }
+    }
+  },
+  bindings: [
+    {
+      agentId: "orchestrator",
+      match: { channel: "telegram", accountId: "marketing_ops" }
+    }
+  ],
+  cron: {
+    jobs: [
+      {
+        id: "weekly-analytics",
+        schedule: "0 8 * * 1",
+        agent: "orchestrator",
+        task: "Run analytics collection for all active businesses for the past week."
+      },
+      {
+        id: "weekly-planning",
+        schedule: "0 9 * * 1",
+        agent: "orchestrator",
+        task: "Run the weekly-planning workflow for all active businesses."
+      }
+    ]
+  }
+}
