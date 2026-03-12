@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Clock3, ExternalLink, GitBranchPlus, MessageSquareText } from "lucide-react";
+import { CollectAnalyticsButton } from "@/components/marketing/collect-analytics-button";
 import { ItemTransitionActions } from "@/components/marketing/item-transition-actions";
 import { PageIntro } from "@/components/marketing/page-intro";
+import { PublishDraftButton } from "@/components/marketing/publish-draft-button";
 import { getContentItemById } from "@/lib/marketing-data";
 import { STATE_COLORS, STATE_LABELS } from "@/lib/state-machine";
 import { getAvailableTransitions } from "@/lib/marketing-data";
@@ -152,6 +154,10 @@ export default async function ItemDetailPage({
               <p>Reviewer: {item.review.reviewer}</p>
               <p>Last updated: {item.review.createdAt}</p>
               <p>Revision cycles: {item.revisionCount ?? 0}</p>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {item.state === "approved" ? <PublishDraftButton itemId={item.id} /> : null}
+              {item.platformUrl || item.platformPostUrl ? <CollectAnalyticsButton itemId={item.id} /> : null}
             </div>
           </div>
 
