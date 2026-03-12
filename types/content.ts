@@ -32,8 +32,14 @@ export interface BusinessProfile {
 }
 
 export interface ReviewRecord {
+  id?: string;
   verdict: "PASS" | "REVISE" | "REJECT";
   confidence: "high" | "medium" | "low";
+  brandFit?: boolean;
+  claimSafety?: boolean;
+  platformFit?: boolean;
+  clarityScore?: number | null;
+  riskFlags?: string[];
   note?: string;
   reviewer: string;
   createdAt: string;
@@ -42,9 +48,12 @@ export interface ReviewRecord {
 export interface VersionRecord {
   id: string;
   label: string;
+  versionNumber?: number;
   wordCount: number;
   hook: string;
   cta: string;
+  visualNotes?: string;
+  altHooks?: string[];
   excerpt: string;
 }
 
@@ -60,6 +69,7 @@ export interface ContentItem {
   id: string;
   businessId?: string;
   businessSlug?: string;
+  businessName?: string;
   title: string;
   platform: Platform;
   scheduledDate: string | null;
@@ -76,6 +86,8 @@ export interface ContentItem {
   reviewerNote?: string;
   currentVersion: VersionRecord;
   review: ReviewRecord;
+  versions?: VersionRecord[];
+  reviews?: ReviewRecord[];
   audit: AuditEvent[];
   revisionCount?: number;
 }

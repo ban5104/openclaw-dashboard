@@ -2,8 +2,14 @@ import { BarChart3, TrendingUp } from "lucide-react";
 import { PageIntro } from "@/components/marketing/page-intro";
 import { getAnalyticsMetrics, getContentItems } from "@/lib/marketing-data";
 
-export default async function AnalyticsPage() {
-  const [metrics, items] = await Promise.all([getAnalyticsMetrics(), getContentItems()]);
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ business?: string }>;
+}) {
+  const params = await searchParams;
+  const businessSlug = params?.business ?? "nelsonai";
+  const [metrics, items] = await Promise.all([getAnalyticsMetrics(businessSlug), getContentItems(businessSlug)]);
 
   return (
     <div className="app-shell page-grid">

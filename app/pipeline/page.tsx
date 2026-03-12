@@ -3,13 +3,19 @@ import { PageIntro } from "@/components/marketing/page-intro";
 import { PipelineBoard } from "@/components/marketing/pipeline-board";
 import { getPipelineData } from "@/lib/marketing-data";
 
-export default async function PipelinePage() {
-  const { items, metrics, pendingApprovalCount, dataSource } = await getPipelineData();
+export default async function PipelinePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ business?: string }>;
+}) {
+  const params = await searchParams;
+  const businessSlug = params?.business ?? "nelsonai";
+  const { items, metrics, pendingApprovalCount, dataSource, business } = await getPipelineData(businessSlug);
 
   return (
     <div className="app-shell page-grid">
       <PageIntro
-        eyebrow="Primary View"
+        eyebrow={`Primary View · ${business.name}`}
         title="Content pipeline"
         description="A working kanban for planned, drafted, reviewed, and approved content. State changes still happen through agents or explicit actions, but this view gives Ben a single operating surface."
         aside={<NotificationBadge count={pendingApprovalCount} label="Items pending approval" />}

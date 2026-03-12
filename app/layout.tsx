@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { OpenClawProvider } from "@/contexts/OpenClawContext";
@@ -29,7 +30,9 @@ export default function RootLayout({
       <body className={`${manrope.variable} ${spaceGrotesk.variable}`}>
         <OpenClawProvider>
           <div className="flex min-h-screen overflow-hidden">
-            <Sidebar />
+            <Suspense fallback={<div className="hidden w-72 border-r lg:block" style={{ borderColor: "var(--border)" }} />}>
+              <Sidebar />
+            </Suspense>
             <main className="flex-1 overflow-y-auto">
               <div className="min-h-screen">{children}</div>
             </main>

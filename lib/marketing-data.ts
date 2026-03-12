@@ -24,8 +24,10 @@ import type {
 
 type DbContentItem = Prisma.ContentItemGetPayload<{
   include: {
+    business: true;
     currentVersion: true;
-    reviewRecords: { orderBy: { createdAt: "desc" }; take: 1 };
+    versions: { orderBy: { versionNumber: "desc" } };
+    reviewRecords: { orderBy: { createdAt: "desc" } };
     auditEvents: { orderBy: { createdAt: "desc" } };
   };
 }>;
@@ -97,6 +99,55 @@ function mapBusinessFromProfile(profile: Prisma.JsonValue | null | undefined, bu
   } satisfies BusinessProfile;
 }
 
+function mapVersion(item: {
+  id: string;
+  versionNumber: number;
+  body: string;
+  headline: string | null;
+  visualNotes: string | null;
+  altHooks: string[];
+  metadata: Prisma.JsonValue;
+}) {
+  const metadata =
+    item.metadata && typeof item.metadata === "object" && !Array.isArray(item.metadata)
+      ? (item.metadata as Record<string, Prisma.JsonValue>)
+      : {};
+  const wordCount = typeof metadata.word_count === "number" ? metadata.word_count : item.body.split(/\s+/).filter(Boolean).length;
+
+  return {
+    id: item.id,
+    label: `Version ${item.versionNumber}`,
+    versionNumber: item.versionNumber,
+    wordCount,
+    hook: fallbackText(item.headline, item.body.slice(0, 110)),
+    cta: "See brief",
+    visualNotes: item.visualNotes ?? undefined,
+    altHooks: item.altHooks,
+    excerpt: item.body.slice(0, 220),
+  };
+}
+
+function mapReview(review: DbContentItem["reviewRecords"][number]) {
+  return {
+    id: review.id,
+    verdict:
+      review.outcome === "pass"
+        ? "PASS"
+        : review.outcome === "reject"
+          ? "REJECT"
+          : "REVISE",
+    confidence: review.confidence ?? "low",
+    brandFit: review.brandFit ?? undefined,
+    claimSafety: review.claimSafety ?? undefined,
+    platformFit: review.platformFit ?? undefined,
+    clarityScore: review.clarityScore,
+    riskFlags: review.riskFlags,
+    note: review.revisionNotes ?? undefined,
+    reviewer: review.reviewerAgent ?? "Reviewer",
+    createdAt: formatDateTime(review.createdAt),
+  } as const;
+}
+
 function mapContentItem(item: DbContentItem, businessSlug?: string): ContentItem {
   const latestReview = item.reviewRecords[0];
   const briefTopic = extractBriefField(item.brief, "topic");
@@ -110,6 +161,7 @@ function mapContentItem(item: DbContentItem, businessSlug?: string): ContentItem
     id: item.id,
     businessId: item.businessId,
     businessSlug,
+    businessName: item.business.name,
     title,
     platform: item.platform,
     scheduledDate: formatScheduledDate(item.scheduledDate),
@@ -125,25 +177,20 @@ function mapContentItem(item: DbContentItem, businessSlug?: string): ContentItem
     platformPostUrl: item.platformPostUrl ?? undefined,
     reviewerNote: latestReview?.revisionNotes ?? undefined,
     currentVersion: {
-      id: item.currentVersion?.id ?? `brief-${item.id}`,
-      label: item.currentVersion ? `Version ${item.currentVersion.versionNumber}` : "Brief only",
-      wordCount: body ? body.split(/\s+/).filter(Boolean).length : 0,
-      hook: fallbackText(item.currentVersion?.headline, title),
-      cta: cta || "No CTA set",
-      excerpt: body ? body.slice(0, 220) : "Awaiting draft generation.",
+      ...(item.currentVersion
+        ? mapVersion(item.currentVersion)
+        : {
+            id: `brief-${item.id}`,
+            label: "Brief only",
+            wordCount: 0,
+            hook: fallbackText(title),
+            cta: cta || "No CTA set",
+            excerpt: "Awaiting draft generation.",
+          }),
     },
-    review: {
-      verdict:
-        latestReview?.outcome === "pass"
-          ? "PASS"
-          : latestReview?.outcome === "reject"
-            ? "REJECT"
-            : "REVISE",
-      confidence: latestReview?.confidence ?? "low",
-      reviewer: latestReview?.reviewerAgent ?? "Reviewer",
-      createdAt: formatDateTime(latestReview?.createdAt),
-      note: latestReview?.revisionNotes ?? undefined,
-    },
+    review: latestReview ? mapReview(latestReview) : { verdict: "REVISE", confidence: "low", reviewer: "Reviewer", createdAt: "Pending" },
+    versions: item.versions.map(mapVersion),
+    reviews: item.reviewRecords.map(mapReview),
     audit: item.auditEvents.map((event) => ({
       id: event.id,
       actor: event.actor,
@@ -218,10 +265,13 @@ export async function getContentItems(slug = "nelsonai") {
       include: {
         contentItems: {
           include: {
+            business: true,
             currentVersion: true,
+            versions: {
+              orderBy: { versionNumber: "desc" },
+            },
             reviewRecords: {
               orderBy: { createdAt: "desc" },
-              take: 1,
             },
             auditEvents: {
               orderBy: { createdAt: "desc" },
@@ -283,9 +333,11 @@ export async function getContentItemById(id: string) {
       include: {
         business: true,
         currentVersion: true,
+        versions: {
+          orderBy: { versionNumber: "desc" },
+        },
         reviewRecords: {
           orderBy: { createdAt: "desc" },
-          take: 1,
         },
         auditEvents: {
           orderBy: { createdAt: "desc" },
@@ -480,6 +532,37 @@ export async function getSettingsChecks(slug = "nelsonai") {
     checks: result.data,
     dataSource: result.dataSource,
   };
+}
+
+export async function getBusinessSettings(slug = "nelsonai") {
+  const fallback = {
+    postingCadence: {
+      linkedin: { posts_per_week: 3 },
+      facebook: { posts_per_week: 2 },
+    },
+    notificationChannel: "telegram",
+    analyticsCadence: "weekly",
+    config: {},
+  };
+
+  const result = await safeDb(async () => {
+    const business = await prisma.business.findUnique({
+      where: { slug },
+    });
+
+    if (!business) {
+      return fallback;
+    }
+
+    return {
+      postingCadence: business.postingCadence,
+      notificationChannel: business.notificationChannel,
+      analyticsCadence: business.analyticsCadence,
+      config: business.config,
+    };
+  }, fallback);
+
+  return result;
 }
 
 export async function getBrandProfile(slug = "nelsonai") {

@@ -3,8 +3,13 @@ import { PageIntro } from "@/components/marketing/page-intro";
 import { getCalendarEntries } from "@/lib/marketing-data";
 import { STATE_LABELS } from "@/lib/state-machine";
 
-export default async function CalendarPage() {
-  const calendar = await getCalendarEntries();
+export default async function CalendarPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ business?: string }>;
+}) {
+  const params = await searchParams;
+  const calendar = await getCalendarEntries(params?.business ?? "nelsonai");
 
   return (
     <div className="app-shell page-grid">

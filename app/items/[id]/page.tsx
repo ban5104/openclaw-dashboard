@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Clock3, ExternalLink, MessageSquareText } from "lucide-react";
+import { ArrowLeft, Clock3, ExternalLink, GitBranchPlus, MessageSquareText } from "lucide-react";
+import { ItemTransitionActions } from "@/components/marketing/item-transition-actions";
 import { PageIntro } from "@/components/marketing/page-intro";
 import { getContentItemById } from "@/lib/marketing-data";
 import { STATE_COLORS, STATE_LABELS } from "@/lib/state-machine";
+import { getAvailableTransitions } from "@/lib/marketing-data";
 
 export default async function ItemDetailPage({
   params,
@@ -17,6 +19,8 @@ export default async function ItemDetailPage({
   if (!item) {
     notFound();
   }
+
+  const transitions = getAvailableTransitions(item.state);
 
   return (
     <div className="app-shell page-grid">
@@ -69,6 +73,30 @@ export default async function ItemDetailPage({
           </div>
 
           <div className="mt-6">
+            <p className="eyebrow">Versions</p>
+            <div className="mt-3 space-y-3">
+              {(item.versions ?? [item.currentVersion]).map((version) => (
+                <div key={version.id} className="rounded-[1.35rem] border p-4" style={{ borderColor: "var(--border)" }}>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold">{version.label}</p>
+                    <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                      {version.wordCount} words
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
+                    {version.excerpt}
+                  </p>
+                  {version.altHooks?.length ? (
+                    <p className="mt-2 text-xs" style={{ color: "var(--text-muted)" }}>
+                      Alt hooks: {version.altHooks.join(" · ")}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6">
             <p className="eyebrow">Audit trail</p>
             <div className="mt-3 space-y-3">
               {item.audit.map((entry) => (
@@ -102,6 +130,15 @@ export default async function ItemDetailPage({
                 {item.review.note}
               </p>
             ) : null}
+            {(item.reviews?.length ?? 0) > 1 ? (
+              <div className="mt-4 space-y-3">
+                {item.reviews?.slice(1).map((review) => (
+                  <div key={review.id} className="rounded-[1.2rem] border p-3 text-sm" style={{ borderColor: "var(--border)" }}>
+                    {review.createdAt} · {review.verdict} · {review.confidence}
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           <div className="surface rounded-[1.75rem] p-5">
@@ -110,10 +147,21 @@ export default async function ItemDetailPage({
               <h2 className="font-display text-2xl font-semibold">Workflow context</h2>
             </div>
             <div className="mt-4 space-y-3 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
-              <p>Business: NelsonAI</p>
+              <p>Business: {item.businessName ?? "NelsonAI"}</p>
               <p>Platform: {item.platform}</p>
               <p>Reviewer: {item.review.reviewer}</p>
               <p>Last updated: {item.review.createdAt}</p>
+              <p>Revision cycles: {item.revisionCount ?? 0}</p>
+            </div>
+          </div>
+
+          <div className="surface rounded-[1.75rem] p-5">
+            <div className="flex items-center gap-2">
+              <GitBranchPlus className="h-5 w-5" />
+              <h2 className="font-display text-2xl font-semibold">Manual transitions</h2>
+            </div>
+            <div className="mt-4">
+              <ItemTransitionActions itemId={item.id} transitions={transitions} />
             </div>
           </div>
         </section>

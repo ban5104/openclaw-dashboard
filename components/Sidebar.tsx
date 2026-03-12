@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ComponentType } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useOpenClaw } from "@/contexts/OpenClawContext";
 import { BusinessSwitcher } from "@/components/marketing/business-switcher";
 import { NotificationBadge } from "@/components/marketing/notification-badge";
@@ -54,6 +54,7 @@ const OPS_NAV = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { state, isConnected } = useOpenClaw();
   const [pendingCount, setPendingCount] = useState(0);
 
@@ -62,7 +63,8 @@ export function Sidebar() {
 
     async function loadPending() {
       try {
-        const response = await fetch("/api/content-items", { cache: "no-store" });
+        const businessSlug = searchParams.get("business") ?? "nelsonai";
+        const response = await fetch(`/api/content-items?business_slug=${businessSlug}`, { cache: "no-store" });
         const payload = await response.json();
         const items = Array.isArray(payload.items) ? payload.items : [];
         const count = items.filter((item: ContentItem) =>
@@ -84,7 +86,7 @@ export function Sidebar() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [searchParams]);
 
   return (
     <aside

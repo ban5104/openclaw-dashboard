@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useOpenClaw } from "@/contexts/OpenClawContext";
 import {
   Timer,
@@ -23,7 +23,7 @@ export default function OpenClawCronPage() {
   const [error, setError] = useState<string | null>(null);
   const [runningJob, setRunningJob] = useState<string | null>(null);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     if (!isConnected) return;
     setLoading(true);
     setError(null);
@@ -35,17 +35,19 @@ export default function OpenClawCronPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isConnected, rpc]);
 
   useEffect(() => {
-    if (isConnected) refresh();
-  }, [isConnected]);
+    if (isConnected) {
+      void refresh();
+    }
+  }, [isConnected, refresh]);
 
   // Subscribe to cron events
   useEffect(() => {
     if (!isConnected) return;
     return subscribe("cron", () => refresh());
-  }, [isConnected, subscribe]);
+  }, [isConnected, subscribe, refresh]);
 
   const handleRun = async (id: string) => {
     setRunningJob(id);

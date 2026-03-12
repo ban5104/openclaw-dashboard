@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useOpenClaw } from "@/contexts/OpenClawContext";
 import {
@@ -393,10 +394,13 @@ function QRPanel({
 
         {/* QR Code */}
         <div className="bg-white p-4 rounded-2xl shadow-lg">
-          <img
+          <Image
             src={state.qrDataUrl}
             alt="QR Code"
-            className="w-56 h-56"
+            width={224}
+            height={224}
+            unoptimized
+            className="h-56 w-56"
             style={{ imageRendering: "pixelated" }}
           />
         </div>

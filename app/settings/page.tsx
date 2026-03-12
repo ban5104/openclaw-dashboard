@@ -1,8 +1,17 @@
 import { PageIntro } from "@/components/marketing/page-intro";
-import { getSettingsChecks } from "@/lib/marketing-data";
+import { getBusinessSettings, getSettingsChecks } from "@/lib/marketing-data";
 
-export default async function SettingsPage() {
-  const { checks, dataSource } = await getSettingsChecks();
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ business?: string }>;
+}) {
+  const params = await searchParams;
+  const businessSlug = params?.business ?? "nelsonai";
+  const [{ checks, dataSource }, settings] = await Promise.all([
+    getSettingsChecks(businessSlug),
+    getBusinessSettings(businessSlug),
+  ]);
 
   return (
     <div className="app-shell page-grid">
@@ -55,6 +64,12 @@ export default async function SettingsPage() {
             <p>Publishing is draft-only. Nothing in this dashboard should imply autonomous posting.</p>
             <p>Approval remains human-gated through the Inbox and Telegram callback flow.</p>
             <p>Analytics collection runs weekly and informs the next planning cycle, but does not modify brand rules without review.</p>
+          </div>
+          <div className="mt-6 rounded-[1.2rem] border p-4 text-sm" style={{ borderColor: "var(--border)" }}>
+            <p className="eyebrow">Business config snapshot</p>
+            <pre className="mt-3 overflow-x-auto leading-6" style={{ color: "var(--text-secondary)" }}>
+              {JSON.stringify(settings.data, null, 2)}
+            </pre>
           </div>
         </section>
       </div>

@@ -3,8 +3,13 @@ import { NotificationBadge } from "@/components/marketing/notification-badge";
 import { PageIntro } from "@/components/marketing/page-intro";
 import { getApprovalItems } from "@/lib/marketing-data";
 
-export default async function InboxPage() {
-  const result = await getApprovalItems();
+export default async function InboxPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ business?: string }>;
+}) {
+  const params = await searchParams;
+  const result = await getApprovalItems(params?.business ?? "nelsonai");
   const items = result.items;
 
   return (

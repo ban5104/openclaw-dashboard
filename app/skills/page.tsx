@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useOpenClaw } from "@/contexts/OpenClawContext";
 import {
   Zap,
@@ -21,7 +21,7 @@ export default function OpenClawSkillsPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "ready" | "missing">("all");
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     if (!isConnected) return;
     setLoading(true);
     setError(null);
@@ -34,11 +34,13 @@ export default function OpenClawSkillsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isConnected, rpc]);
 
   useEffect(() => {
-    if (isConnected) refresh();
-  }, [isConnected]);
+    if (isConnected) {
+      void refresh();
+    }
+  }, [isConnected, refresh]);
 
   const isReady = (s: SkillInfo) =>
     s.eligible === true && !s.disabled && (!s.missing?.bins?.length);

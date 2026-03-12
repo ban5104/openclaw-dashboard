@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { BrandProfileEditor } from "@/components/marketing/brand-profile-editor";
 import { PageIntro } from "@/components/marketing/page-intro";
 import { getBrandProfile, getBusiness } from "@/lib/marketing-data";
 
@@ -70,11 +71,11 @@ export default async function BrandPage({
             </div>
           </div>
           {profileResult.profile ? (
-            <div className="mt-6 rounded-[1.2rem] border p-4" style={{ borderColor: "var(--border)" }}>
-              <p className="eyebrow">Stored profile JSON</p>
-              <pre className="mt-3 overflow-x-auto text-xs leading-6" style={{ color: "var(--text-secondary)" }}>
-                {JSON.stringify(profileResult.profile, null, 2)}
-              </pre>
+            <div className="mt-6">
+              <BrandProfileEditor
+                slug={slug}
+                initialValue={JSON.stringify(profileResult.profile, null, 2)}
+              />
             </div>
           ) : null}
         </section>

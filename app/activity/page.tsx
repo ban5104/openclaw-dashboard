@@ -2,8 +2,13 @@ import { ActivityFeed } from "@/components/marketing/activity-feed";
 import { PageIntro } from "@/components/marketing/page-intro";
 import { getActivityEvents } from "@/lib/marketing-data";
 
-export default async function ActivityPage() {
-  const events = await getActivityEvents();
+export default async function ActivityPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ business?: string }>;
+}) {
+  const params = await searchParams;
+  const events = await getActivityEvents(params?.business ?? "nelsonai");
 
   return (
     <div className="app-shell page-grid">
