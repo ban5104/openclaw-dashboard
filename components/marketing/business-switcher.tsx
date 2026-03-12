@@ -51,7 +51,7 @@ export function BusinessSwitcher() {
 
     const params = new URLSearchParams(searchParams?.toString());
     params.set("business", slug);
-    return `${pathname ?? "/pipeline"}?${params.toString()}`;
+    return `${pathname ?? "/queue"}?${params.toString()}`;
   };
 
   return (

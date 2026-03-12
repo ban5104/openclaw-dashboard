@@ -18,11 +18,10 @@ function requiredEnv(name) {
   return value;
 }
 
-function keyboard(itemId, draftUrl, dashboardUrl) {
+function keyboard(itemId, dashboardUrl) {
   return {
     inline_keyboard: [
       [
-        ...(draftUrl ? [{ text: 'View Draft ↗', url: draftUrl }] : []),
         ...(dashboardUrl ? [{ text: 'Open Dashboard ↗', url: dashboardUrl }] : []),
       ],
       [{ text: '✅ Mark Posted', callback_data: `mark_posted:${itemId}` }],
@@ -31,8 +30,8 @@ function keyboard(itemId, draftUrl, dashboardUrl) {
 }
 
 function renderMessage(eventType, payload) {
-  if (eventType === 'draft_ready') {
-    return `🟢 ${payload.business_name} — ${payload.platform_label} draft ready\n━━━━━━━━━━━━━━━━━━━━━\nHook: ${payload.headline || 'N/A'}\nReview: ✅ Passed${payload.confidence ? ` (confidence: ${payload.confidence})` : ''}\nCTA: ${payload.cta || 'N/A'}\n━━━━━━━━━━━━━━━━━━━━━\n📎 Draft: ${payload.platform_draft_url || 'N/A'}\n📋 Dashboard: ${payload.dashboard_url || 'N/A'}`;
+  if (eventType === 'batch_ready') {
+    return `📦 ${payload.business_name} — ${payload.count || 0} posts ready to schedule\n━━━━━━━━━━━━━━━━━━━━━\nLinkedIn: ${payload.linkedin_count || 0}\nFacebook: ${payload.facebook_count || 0}\nSuggested window: ${payload.date_range || 'N/A'}\n━━━━━━━━━━━━━━━━━━━━━\n📋 Queue: ${payload.dashboard_url || 'N/A'}`;
   }
   if (eventType === 'revision_required') {
     return `🟡 ${payload.business_name} — ${payload.platform_label} draft needs revision\n━━━━━━━━━━━━━━━━━━━━━\nIssue: ${payload.revision_notes || 'Revision requested'}\nFlags: ${(payload.risk_flags || []).join(', ') || 'None'}\nAttempt: ${payload.version_number || '?'} / 2\n━━━━━━━━━━━━━━━━━━━━━\n📋 Dashboard: ${payload.dashboard_url || 'N/A'}`;
@@ -62,10 +61,10 @@ async function loadPayload(pool, args, dashboardBaseUrl) {
     return { eventType, contentItemId, businessId, payload };
   }
 
-  if (eventType === 'draft_ready' || eventType === 'revision_required') {
+  if (eventType === 'revision_required') {
     if (!contentItemId) throw new Error(`${eventType} requires --content-item-id or --payload`);
     const { rows } = await pool.query(
-      `SELECT ci.id, ci.platform, ci.platform_draft_url, ci.business_id, b.name AS business_name,
+      `SELECT ci.id, ci.platform, ci.business_id, b.name AS business_name,
               cv.headline, ci.brief, rr.confidence, rr.revision_notes, rr.risk_flags, cv.version_number
          FROM content_items ci
          JOIN businesses b ON b.id = ci.business_id
@@ -90,11 +89,52 @@ async function loadPayload(pool, args, dashboardBaseUrl) {
         headline: row.headline,
         confidence: row.confidence,
         cta: brief.cta || null,
-        platform_draft_url: row.platform_draft_url,
         revision_notes: row.revision_notes,
         risk_flags: row.risk_flags || [],
         version_number: row.version_number,
         dashboard_url: `${dashboardBaseUrl}/items/${contentItemId}`,
+      },
+    };
+  }
+
+  if (eventType === 'batch_ready') {
+    if (!contentItemId && !businessId) throw new Error('batch_ready requires --content-item-id, --business-id, or --payload');
+    const businessFilter = businessId
+      ? { clause: 'ci.business_id = $1', values: [businessId] }
+      : { clause: 'ci.id = $1', values: [contentItemId] };
+
+    const { rows } = await pool.query(
+      `SELECT b.id AS business_id,
+              b.name AS business_name,
+              ci.platform,
+              ci.scheduled_date
+         FROM content_items ci
+         JOIN businesses b ON b.id = ci.business_id
+        WHERE ${businessFilter.clause}
+          AND ci.state = 'ready_to_post'
+        ORDER BY ci.scheduled_date ASC NULLS LAST`,
+      businessFilter.values,
+    );
+
+    if (!rows.length) throw new Error('No ready-to-post items found for batch notification');
+
+    const businessRow = rows[0];
+    const linkedinCount = rows.filter((row) => row.platform === 'linkedin').length;
+    const facebookCount = rows.filter((row) => row.platform === 'facebook').length;
+    const firstDate = rows[0].scheduled_date;
+    const lastDate = rows[rows.length - 1].scheduled_date;
+
+    return {
+      eventType,
+      contentItemId: null,
+      businessId: businessRow.business_id,
+      payload: {
+        business_name: businessRow.business_name,
+        count: rows.length,
+        linkedin_count: linkedinCount,
+        facebook_count: facebookCount,
+        date_range: firstDate && lastDate ? `${firstDate} to ${lastDate}` : 'Unscheduled',
+        dashboard_url: `${dashboardBaseUrl}/queue`,
       },
     };
   }
@@ -109,7 +149,7 @@ async function loadPayload(pool, args, dashboardBaseUrl) {
       businessId,
       payload: {
         business_name: rows[0].name,
-        dashboard_url: `${dashboardBaseUrl}/pipeline`,
+        dashboard_url: `${dashboardBaseUrl}/queue`,
       },
     };
   }
@@ -148,7 +188,7 @@ async function loadPayload(pool, args, dashboardBaseUrl) {
     businessId,
     payload: {
       business_name: 'Marketing Ops',
-      dashboard_url: `${dashboardBaseUrl}/pipeline`,
+      dashboard_url: `${dashboardBaseUrl}/queue`,
       message: 'Event notification',
     },
   };
@@ -167,7 +207,7 @@ async function main() {
     const loaded = await loadPayload(pool, args, dashboardBaseUrl);
     const text = renderMessage(loaded.eventType, loaded.payload);
     const replyMarkup = loaded.contentItemId
-      ? keyboard(loaded.contentItemId, loaded.payload.platform_draft_url, loaded.payload.dashboard_url)
+      ? keyboard(loaded.contentItemId, loaded.payload.dashboard_url)
       : undefined;
 
     const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
