@@ -13,6 +13,7 @@ async function main() {
         linkedin: { posts_per_week: 3 },
         facebook: { posts_per_week: 2 },
       },
+      analyticsCadence: "weekly",
       brandProfilePath: "~/.openclaw/workspaces/marketing-ops/businesses/nelsonai/brand-profile.md",
     },
     create: {
@@ -24,6 +25,7 @@ async function main() {
         linkedin: { posts_per_week: 3 },
         facebook: { posts_per_week: 2 },
       },
+      analyticsCadence: "weekly",
       brandProfilePath: "~/.openclaw/workspaces/marketing-ops/businesses/nelsonai/brand-profile.md",
     },
   });
@@ -58,7 +60,7 @@ async function main() {
     update: {
       businessId: business.id,
       platform: "linkedin",
-      state: "draft_on_platform",
+      state: "ready_to_post",
       campaignTheme: "Leadership readiness",
       brief: {
         topic: "Why CFOs need AI literacy in 2026",
@@ -67,14 +69,14 @@ async function main() {
         cta: "Book an intro call",
       },
       scheduledDate: new Date("2026-03-17"),
+      suggestedTime: "09:00",
       priority: "high",
-      platformDraftUrl: "https://example.com/linkedin/draft/cfo-literacy",
     },
     create: {
       id: "11111111-1111-4111-8111-111111111111",
       businessId: business.id,
       platform: "linkedin",
-      state: "draft_on_platform",
+      state: "ready_to_post",
       campaignTheme: "Leadership readiness",
       brief: {
         topic: "Why CFOs need AI literacy in 2026",
@@ -83,12 +85,11 @@ async function main() {
         cta: "Book an intro call",
       },
       scheduledDate: new Date("2026-03-17"),
+      suggestedTime: "09:00",
       priority: "high",
       briefedAt: new Date(),
       firstDraftAt: new Date(),
       approvedAt: new Date(),
-      publishedDraftAt: new Date(),
-      platformDraftUrl: "https://example.com/linkedin/draft/cfo-literacy",
     },
   });
 
@@ -100,8 +101,10 @@ async function main() {
       },
     },
     update: {
-      body: "AI literacy for finance leaders is not about prompting tricks. It is about understanding where workflows change, where controls break, and where margin improves.",
+      body: "Your CFO does not need to code. They do need to recognize where AI can quietly create exposure.\n\nAI literacy for finance leaders is not about prompting tricks. It is about understanding where workflows change, where controls break, and where margin improves.",
       headline: "Why CFOs need AI literacy in 2026",
+      imagePrompt: "Professional CFO portrait with workflow overlays and risk control motifs.",
+      imageUrl: "https://placehold.co/1200x675/png?text=CFO+AI+Literacy",
       visualNotes: "Confident executive portrait with workflow diagram overlay.",
       altHooks: [
         "Your CFO does not need to code. They do need to recognize where AI creates exposure.",
@@ -109,14 +112,17 @@ async function main() {
       ],
       metadata: {
         word_count: 247,
+        cta: "Book an intro call",
       },
       createdBy: "content-writer",
     },
     create: {
       contentItemId: contentItem.id,
       versionNumber: 1,
-      body: "AI literacy for finance leaders is not about prompting tricks. It is about understanding where workflows change, where controls break, and where margin improves.",
+      body: "Your CFO does not need to code. They do need to recognize where AI can quietly create exposure.\n\nAI literacy for finance leaders is not about prompting tricks. It is about understanding where workflows change, where controls break, and where margin improves.",
       headline: "Why CFOs need AI literacy in 2026",
+      imagePrompt: "Professional CFO portrait with workflow overlays and risk control motifs.",
+      imageUrl: "https://placehold.co/1200x675/png?text=CFO+AI+Literacy",
       visualNotes: "Confident executive portrait with workflow diagram overlay.",
       altHooks: [
         "Your CFO does not need to code. They do need to recognize where AI creates exposure.",
@@ -124,6 +130,7 @@ async function main() {
       ],
       metadata: {
         word_count: 247,
+        cta: "Book an intro call",
       },
       createdBy: "content-writer",
       modelUsed: "anthropic/claude-sonnet-4-20250514",
@@ -178,6 +185,15 @@ async function main() {
         toState: "approved",
         details: { outcome: "pass", source: "seed" },
       },
+      {
+        businessId: business.id,
+        contentItemId: contentItem.id,
+        actor: "orchestrator",
+        action: "batch_ready",
+        fromState: "approved",
+        toState: "ready_to_post",
+        details: { source: "seed" },
+      },
     ],
   });
 
@@ -197,48 +213,6 @@ async function main() {
       insights: "Leadership-readiness content is outperforming generic AI updates.",
     },
   });
-
-  const creativeAssets = [
-    {
-      title: "Executive with workflow overlay",
-      assetUrl: "https://placehold.co/1200x675/png?text=Executive+Workflow",
-      caption: "Professional executive portrait with a subtle operations dashboard and process overlay.",
-      tags: ["executive", "workflow", "dashboard", "professional"],
-      sourceType: "owned",
-    },
-    {
-      title: "Team workshop whiteboard",
-      assetUrl: "https://placehold.co/1200x675/png?text=Team+Workshop",
-      caption: "Leadership team workshop around a whiteboard discussing AI adoption and process changes.",
-      tags: ["leadership", "whiteboard", "team", "ai-adoption"],
-      sourceType: "reference",
-    },
-    {
-      title: "Operator at analytics desk",
-      assetUrl: "https://placehold.co/1200x675/png?text=Analytics+Desk",
-      caption: "Operations lead reviewing marketing analytics and workflow KPIs on a laptop.",
-      tags: ["analytics", "operations", "kpi", "laptop"],
-      sourceType: "past_post",
-    },
-  ];
-
-  await Promise.all(
-    creativeAssets.map((asset) =>
-      prisma.creativeAsset.upsert({
-        where: {
-          businessId_assetUrl: {
-            businessId: business.id,
-            assetUrl: asset.assetUrl,
-          },
-        },
-        update: asset,
-        create: {
-          businessId: business.id,
-          ...asset,
-        },
-      }),
-    ),
-  );
 }
 
 main()

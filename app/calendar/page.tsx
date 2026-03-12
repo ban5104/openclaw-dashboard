@@ -14,9 +14,9 @@ export default async function CalendarPage({
   return (
     <div className="app-shell page-grid">
       <PageIntro
-        eyebrow="Phase 2 View"
-        title="Publishing calendar"
-        description="A week-level planning surface that helps Ben see what is drafted, what is approved, and what still needs intervention before the schedule slips."
+        eyebrow="Visibility"
+        title="Calendar"
+        description="A scheduling view of planned, ready, and posted content so Ben can see the week at a glance before the native batch scheduling pass."
       />
 
       <div className="grid gap-4 xl:grid-cols-5">
@@ -32,7 +32,7 @@ export default async function CalendarPage({
                   </p>
                   <p className="mt-2 text-sm font-semibold leading-6">{item.title}</p>
                   <p className="mt-2 text-xs" style={{ color: "var(--text-secondary)" }}>
-                    {STATE_LABELS[item.state]}
+                    {item.suggestedTime ? `${item.suggestedTime} · ` : ""}{STATE_LABELS[item.state]}
                   </p>
                 </Link>
               ))}

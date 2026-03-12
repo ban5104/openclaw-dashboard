@@ -34,7 +34,7 @@ function currentTimestampField(toState) {
     briefed: 'briefed_at',
     draft_ready: 'first_draft_at',
     approved: 'approved_at',
-    draft_on_platform: 'published_draft_at',
+    ready_to_post: 'approved_at',
     posted: 'posted_at',
     analyzed: 'analyzed_at',
   };

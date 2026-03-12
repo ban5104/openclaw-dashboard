@@ -43,6 +43,7 @@ export async function POST(request: Request) {
       campaignTheme: body.campaignTheme ?? null,
       brief: body.brief ?? {},
       scheduledDate: body.scheduledDate ? new Date(body.scheduledDate) : null,
+      suggestedTime: body.suggestedTime ?? null,
       priority: body.priority ?? "normal",
     },
   });

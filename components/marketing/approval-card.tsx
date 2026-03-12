@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink, MessageSquareWarning } from "lucide-react";
+import { MessageSquareWarning } from "lucide-react";
 import type { ContentItem } from "@/types/content";
 import { MarkPostedButton } from "@/components/marketing/mark-posted-button";
 
@@ -32,11 +32,6 @@ export function ApprovalCard({ item }: { item: ContentItem }) {
           <Link href={`/items/${item.id}`} className="rounded-full px-4 py-2 text-sm font-medium" style={{ background: "var(--text-primary)", color: "#fff8ef" }}>
             View draft
           </Link>
-          {item.platformUrl ? (
-            <a href={item.platformUrl} className="rounded-full border px-4 py-2 text-sm font-medium" style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}>
-              View on platform <ExternalLink className="ml-1 inline h-3.5 w-3.5" />
-            </a>
-          ) : null}
           <MarkPostedButton item={item} />
         </div>
       </div>

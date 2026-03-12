@@ -38,9 +38,10 @@ export async function PATCH(
       campaignTheme: body.campaignTheme,
       brief: body.brief,
       scheduledDate: body.scheduledDate ? new Date(body.scheduledDate) : undefined,
+      suggestedTime: body.suggestedTime ?? undefined,
       priority: body.priority,
-      platformDraftUrl: body.platformDraftUrl,
-      platformPostUrl: body.platformPostUrl,
+      boostCandidate: body.boostCandidate,
+      boostReason: body.boostReason,
     },
   });
 

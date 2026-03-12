@@ -8,41 +8,34 @@ import { BusinessSwitcher } from "@/components/marketing/business-switcher";
 import { NotificationBadge } from "@/components/marketing/notification-badge";
 import type { ContentItem } from "@/types/content";
 import {
-  Activity,
   BarChart3,
   Bot,
   BriefcaseBusiness,
   CalendarDays,
-  ClipboardCheck,
   Clock,
-  LayoutDashboard,
-  MessageSquare,
   Cpu,
+  LayoutDashboard,
+  List,
   Radio,
   ScrollText,
   Settings,
-  Sparkles,
+  Users,
   Wifi,
   WifiOff,
   Loader2,
-  List,
   Zap,
 } from "lucide-react";
 
-const MARKETING_NAV = [
-  { href: "/pipeline", label: "Pipeline", icon: LayoutDashboard },
-  { href: "/inbox", label: "Inbox", icon: ClipboardCheck, badge: "2" },
-  { href: "/activity", label: "Activity", icon: Activity },
+const VISIBILITY_NAV = [
+  { href: "/queue", label: "Queue", icon: LayoutDashboard },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/brands/nelsonai", label: "Brand", icon: Sparkles },
+  { href: "/agents-overview", label: "Agents", icon: Users },
   { href: "/settings", label: "Settings", icon: BriefcaseBusiness },
 ];
 
 const OPS_NAV = [
-  { href: "/overview", label: "Overview", icon: LayoutDashboard },
-  { href: "/chat", label: "Chat", icon: MessageSquare },
-  { href: "/agents", label: "Agents", icon: Bot },
+  { href: "/agents", label: "OpenClaw Agents", icon: Bot },
   { href: "/sessions", label: "Sessions", icon: List },
   { href: "/models", label: "Models", icon: Cpu },
   { href: "/skills", label: "Skills", icon: Zap },
@@ -56,32 +49,31 @@ export function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { state, isConnected } = useOpenClaw();
-  const [pendingCount, setPendingCount] = useState(0);
+  const [queueCount, setQueueCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadPending() {
+    async function loadQueueCount() {
       try {
         const businessSlug = searchParams.get("business") ?? "nelsonai";
-        const response = await fetch(`/api/content-items?business_slug=${businessSlug}`, { cache: "no-store" });
+        const response = await fetch(`/api/content-items?business_slug=${businessSlug}&state=ready_to_post`, {
+          cache: "no-store",
+        });
         const payload = await response.json();
         const items = Array.isArray(payload.items) ? payload.items : [];
-        const count = items.filter((item: ContentItem) =>
-          ["approved", "draft_on_platform", "notified"].includes(item.state),
-        ).length;
 
         if (!cancelled) {
-          setPendingCount(count);
+          setQueueCount(items.length);
         }
       } catch {
         if (!cancelled) {
-          setPendingCount(0);
+          setQueueCount(0);
         }
       }
     }
 
-    void loadPending();
+    void loadQueueCount();
 
     return () => {
       cancelled = true;
@@ -100,11 +92,11 @@ export function Sidebar() {
               Marketing Ops
             </p>
             <h1 className="mt-2 font-display text-xl font-semibold" style={{ color: "var(--text-primary)" }}>
-              OpenClaw Control
+              Queue Control
             </h1>
           </div>
           <span className="rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ borderColor: "var(--border)", color: "var(--accent-strong)" }}>
-            MVP
+            Spec v2
           </span>
         </div>
         <BusinessSwitcher />
@@ -113,48 +105,45 @@ export function Sidebar() {
       <div className="border-b px-5 py-4" style={{ borderColor: "var(--border)" }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-          {state === "connected" ? (
-            <Wifi className="w-3.5 h-3.5 text-green-500" />
-          ) : state === "connecting" || state === "authenticating" ? (
-            <Loader2 className="w-3.5 h-3.5 text-yellow-500 animate-spin" />
-          ) : (
-            <WifiOff className="w-3.5 h-3.5 text-red-500" />
-          )}
-          <span
-            className="text-[11px] font-medium"
-            style={{
-              color: isConnected
-                ? "#22c55e"
-                : state === "connecting" || state === "authenticating"
-                  ? "#eab308"
-                  : "#ef4444",
-            }}
-          >
-            {state === "connected"
-              ? "Connected"
-              : state === "connecting"
-                ? "Connecting..."
-                : state === "authenticating"
-                  ? "Authenticating..."
-                  : state === "error"
-                    ? "Error"
-                    : "Disconnected"}
-          </span>
-        </div>
-          <NotificationBadge count={pendingCount} label="Pending approvals" />
+            {state === "connected" ? (
+              <Wifi className="h-3.5 w-3.5 text-green-500" />
+            ) : state === "connecting" || state === "authenticating" ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-yellow-500" />
+            ) : (
+              <WifiOff className="h-3.5 w-3.5 text-red-500" />
+            )}
+            <span
+              className="text-[11px] font-medium"
+              style={{
+                color: isConnected
+                  ? "#22c55e"
+                  : state === "connecting" || state === "authenticating"
+                    ? "#eab308"
+                    : "#ef4444",
+              }}
+            >
+              {state === "connected"
+                ? "Connected"
+                : state === "connecting"
+                  ? "Connecting..."
+                  : state === "authenticating"
+                    ? "Authenticating..."
+                    : state === "error"
+                      ? "Error"
+                      : "Disconnected"}
+            </span>
+          </div>
+          <NotificationBadge count={queueCount} label="Ready-to-post queue" />
         </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <NavSection title="Marketing" items={MARKETING_NAV} pathname={pathname} />
+        <NavSection title="Visibility" items={VISIBILITY_NAV} pathname={pathname} />
         <NavSection title="OpenClaw Ops" items={OPS_NAV} pathname={pathname} />
       </nav>
 
-      <div
-        className="border-t px-5 py-4 text-xs"
-        style={{ borderColor: "var(--border-strong)", color: "var(--text-secondary)" }}
-      >
-        Draft-only publishing. Human approval required.
+      <div className="border-t px-5 py-4 text-xs" style={{ borderColor: "var(--border-strong)", color: "var(--text-secondary)" }}>
+        Telegram handles approvals. The dashboard is for queue visibility, scheduling context, and analytics.
       </div>
     </aside>
   );
@@ -166,7 +155,7 @@ function NavSection({
   pathname,
 }: {
   title: string;
-  items: Array<{ href: string; label: string; icon: ComponentType<{ className?: string }>; badge?: string }>;
+  items: Array<{ href: string; label: string; icon: ComponentType<{ className?: string }> }>;
   pathname: string;
 }) {
   return (
@@ -176,19 +165,14 @@ function NavSection({
       </p>
       <div className="space-y-1">
         {items.map((item) => {
-          const isActive =
-            pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
           const Icon = item.icon;
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition-colors ${
-                isActive
-                  ? "font-medium"
-                  : "hover:bg-white/5"
-              }`}
+              className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition-colors ${isActive ? "font-medium" : "hover:bg-white/5"}`}
               style={
                 isActive
                   ? {
@@ -198,9 +182,8 @@ function NavSection({
                   : { color: "var(--text-secondary)" }
               }
             >
-              <Icon className="w-4 h-4 flex-shrink-0" />
+              <Icon className="h-4 w-4 flex-shrink-0" />
               <span className="flex-1">{item.label}</span>
-              {item.badge ? <NotificationBadge count={Number(item.badge)} label={item.label} compact /> : null}
             </Link>
           );
         })}

@@ -21,9 +21,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Content item not found." }, { status: 404 });
   }
 
-  const platformPostId = body.platformPostId ?? item.platformPostId ?? item.platformDraftId;
+  const platformPostId = body.platformPostId;
   if (!platformPostId) {
-    return NextResponse.json({ error: "No platform identifier available for analytics collection." }, { status: 400 });
+    return NextResponse.json({ error: "platformPostId is required for analytics collection." }, { status: 400 });
   }
 
   const snapshotDate = body.snapshotDate ? new Date(body.snapshotDate) : new Date();

@@ -1,5 +1,5 @@
 name: content-lifecycle
-description: Move a content item from briefed through to platform draft and notification
+description: Move a content item from briefed through review to ready-to-post
 args:
   content_item_id:
     required: true
@@ -64,18 +64,17 @@ steps:
     command: >
       echo "$review-draft.stdout" | jq -r '.outcome'
 
-  - id: publish-draft
+  - id: mark-ready
     command: >
-      openclaw.invoke --tool ${LOBSTER_ARG_PLATFORM}-publisher --action create-draft
-      --args-json '{"content_item_id": "$LOBSTER_ARG_CONTENT_ITEM_ID"}'
+      openclaw.invoke --tool db-state-manager --action transition
+      --args-json '{"content_item_id": "$LOBSTER_ARG_CONTENT_ITEM_ID", "to_state": "ready_to_post"}'
     condition: $check-approval.stdout == "pass"
-    approval: required
 
-  - id: notify-ben
+  - id: notify-batch-update
     command: >
       openclaw.invoke --tool telegram-notifier --action send
       --args-json '{
-        "event_type": "draft_ready",
+        "event_type": "batch_ready",
         "content_item_id": "$LOBSTER_ARG_CONTENT_ITEM_ID"
       }'
-    condition: $publish-draft.exitCode == 0
+    condition: $check-approval.stdout == "pass"

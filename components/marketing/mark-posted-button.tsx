@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import type { ContentItem } from "@/types/content";
 
 export function MarkPostedButton({ item }: { item: ContentItem }) {
+  const router = useRouter();
   const [pending, setPending] = useState(false);
   const [done, setDone] = useState(item.state === "posted");
 
@@ -12,31 +14,7 @@ export function MarkPostedButton({ item }: { item: ContentItem }) {
     setPending(true);
 
     try {
-      const firstState = item.state === "draft_on_platform" ? "notified" : "posted";
-      const firstResponse = await fetch(`/api/content-items/${item.id}/transition`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          to_state: firstState,
-          actor: "ben",
-          details: {
-            source: "dashboard",
-          },
-        }),
-      });
-
-      if (!firstResponse.ok) {
-        return;
-      }
-
-      if (firstState === "posted") {
-        setDone(true);
-        return;
-      }
-
-      const secondResponse = await fetch(`/api/content-items/${item.id}/transition`, {
+      const response = await fetch(`/api/content-items/${item.id}/transition`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -50,8 +28,9 @@ export function MarkPostedButton({ item }: { item: ContentItem }) {
         }),
       });
 
-      if (secondResponse.ok) {
+      if (response.ok) {
         setDone(true);
+        router.refresh();
       }
     } finally {
       setPending(false);

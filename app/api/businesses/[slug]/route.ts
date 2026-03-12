@@ -37,7 +37,7 @@ export async function PATCH(
     data: {
       timezone: body.timezone,
       postingCadence: body.postingCadence,
-      notificationChannel: body.notificationChannel,
+      brandProfilePath: body.brandProfilePath,
       analyticsCadence: body.analyticsCadence,
       config: body.config,
     },

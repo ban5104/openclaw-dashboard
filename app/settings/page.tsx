@@ -1,5 +1,5 @@
 import { PageIntro } from "@/components/marketing/page-intro";
-import { getBusinessSettings, getSettingsChecks } from "@/lib/marketing-data";
+import { getBusiness, getBusinessSettings, getSettingsChecks } from "@/lib/marketing-data";
 
 export default async function SettingsPage({
   searchParams,
@@ -8,17 +8,18 @@ export default async function SettingsPage({
 }) {
   const params = await searchParams;
   const businessSlug = params?.business ?? "nelsonai";
-  const [{ checks, dataSource }, settings] = await Promise.all([
+  const [{ checks, dataSource }, settings, business] = await Promise.all([
     getSettingsChecks(businessSlug),
     getBusinessSettings(businessSlug),
+    getBusiness(businessSlug),
   ]);
 
   return (
     <div className="app-shell page-grid">
       <PageIntro
-        eyebrow="Operations"
-        title="Business settings"
-        description="A single-user admin surface for connection health, publishing credentials, and the background jobs that keep weekly planning and alerts running."
+        eyebrow="Visibility"
+        title="Settings"
+        description="Business configuration, brand profile location, cadence settings, and integration health. Workflow control still belongs to Telegram and the orchestrator."
       />
 
       {dataSource === "mock" ? (
@@ -27,9 +28,31 @@ export default async function SettingsPage({
         </div>
       ) : null}
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
+      <div className="grid gap-4 xl:grid-cols-[1fr_0.95fr]">
         <section className="surface rounded-[1.75rem] p-5">
-          <h2 className="font-display text-2xl font-semibold">Integration status</h2>
+          <h2 className="font-display text-2xl font-semibold">Business config</h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <InfoCard label="Business" value={business.business.name} />
+            <InfoCard label="Timezone" value={business.business.timezone} />
+            <InfoCard label="Platforms" value={(business.business.enabledPlatforms ?? []).join(", ")} />
+            <InfoCard label="Analytics cadence" value={String(settings.data.analyticsCadence)} />
+          </div>
+          <div className="mt-5 rounded-[1.2rem] border p-4 text-sm" style={{ borderColor: "var(--border)" }}>
+            <p className="eyebrow">Brand profile path</p>
+            <p className="mt-3 break-all leading-7" style={{ color: "var(--text-secondary)" }}>
+              {String(settings.data.brandProfilePath ?? "Not configured")}
+            </p>
+          </div>
+          <div className="mt-5 rounded-[1.2rem] border p-4 text-sm" style={{ borderColor: "var(--border)" }}>
+            <p className="eyebrow">Posting cadence</p>
+            <pre className="mt-3 overflow-x-auto leading-6" style={{ color: "var(--text-secondary)" }}>
+              {JSON.stringify(settings.data.postingCadence, null, 2)}
+            </pre>
+          </div>
+        </section>
+
+        <section className="surface rounded-[1.75rem] p-5">
+          <h2 className="font-display text-2xl font-semibold">Integration health</h2>
           <div className="mt-5 space-y-3">
             {checks.map((check) => (
               <div key={check.label} className="flex items-center justify-between rounded-[1.3rem] border p-4" style={{ borderColor: "var(--border)" }}>
@@ -56,23 +79,25 @@ export default async function SettingsPage({
               </div>
             ))}
           </div>
-        </section>
 
-        <section className="surface rounded-[1.75rem] p-5">
-          <h2 className="font-display text-2xl font-semibold">Posting guardrails</h2>
-          <div className="mt-5 space-y-4 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
-            <p>Publishing is draft-only. Nothing in this dashboard should imply autonomous posting.</p>
-            <p>Approval remains human-gated through the Inbox and Telegram callback flow.</p>
-            <p>Analytics collection runs weekly and informs the next planning cycle, but does not modify brand rules without review.</p>
-          </div>
-          <div className="mt-6 rounded-[1.2rem] border p-4 text-sm" style={{ borderColor: "var(--border)" }}>
-            <p className="eyebrow">Business config snapshot</p>
-            <pre className="mt-3 overflow-x-auto leading-6" style={{ color: "var(--text-secondary)" }}>
-              {JSON.stringify(settings.data, null, 2)}
-            </pre>
+          <div className="mt-6 rounded-[1.2rem] border p-4 text-sm leading-7" style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>
+            <p>Telegram is the primary interface for approvals and operational feedback.</p>
+            <p>The dashboard should not imply autonomous platform publishing.</p>
+            <p>Weekly analytics should inform next week&apos;s briefs, not silently rewrite brand rules.</p>
           </div>
         </section>
       </div>
+    </div>
+  );
+}
+
+function InfoCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[1.25rem] border p-4" style={{ borderColor: "var(--border)" }}>
+      <p className="text-xs uppercase tracking-[0.18em]" style={{ color: "var(--text-muted)" }}>
+        {label}
+      </p>
+      <p className="mt-2 text-base font-semibold">{value}</p>
     </div>
   );
 }

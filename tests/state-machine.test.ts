@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { buildPipelineColumns, canTransition, STATE_LABELS } from "@/lib/state-machine";
 import type { ContentItem } from "@/types/content";
 
-test("state machine allows approved to publishing_draft", () => {
-  assert.equal(canTransition("approved", "publishing_draft"), true);
+test("state machine allows approved to ready_to_post", () => {
+  assert.equal(canTransition("approved", "ready_to_post"), true);
   assert.equal(canTransition("approved", "posted"), false);
 });
 
@@ -22,7 +22,8 @@ test("buildPipelineColumns groups items by state", () => {
       brief: "Brief",
       hook: "Hook",
       cta: "CTA",
-      currentVersion: { id: "v1", label: "Version 1", wordCount: 10, hook: "Hook", cta: "CTA", excerpt: "Excerpt" },
+      suggestedTime: null,
+      currentVersion: { id: "v1", label: "Version 1", body: "Body", wordCount: 10, hook: "Hook", cta: "CTA", excerpt: "Excerpt" },
       review: { verdict: "REVISE", confidence: "low", reviewer: "Reviewer", createdAt: "Pending" },
       audit: [],
     },

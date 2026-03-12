@@ -1,13 +1,13 @@
 # Marketing Operations Dashboard
 
-A Next.js dashboard for the marketing operations system described in [`spec.md`](./spec.md). It keeps the upstream OpenClaw gateway client and ops/admin pages, while adding a Postgres-backed content pipeline, approval inbox, analytics views, and business settings.
+A Next.js visibility dashboard for the marketing operations system described in [`spec.md`](./spec.md). It keeps the upstream OpenClaw gateway client and ops/admin pages, while adding a Postgres-backed ready-to-post queue, calendar, analytics, agent roster, and business settings.
 
 ## What This Repo Owns
 
-- Marketing dashboard pages for pipeline, inbox, activity, brand, calendar, analytics, and settings
-- Postgres/Prisma schema for content lifecycle, reviews, analytics, notifications, and audit history
-- Internal API routes for content items, transitions, reviews, analytics, businesses, and audit events
-- Telegram webhook handling for `mark_posted` callbacks
+- Marketing dashboard pages for queue, calendar, analytics, agent overview, and settings
+- Postgres/Prisma schema for the simplified content lifecycle, reviews, analytics, and audit history
+- Internal API routes for content items, transitions, analytics, businesses, and brand profiles
+- OpenClaw workspace templates aligned to the Telegram-first orchestrator workflow
 - Seed script for a local NelsonAI demo dataset
 
 ## What This Repo Does Not Own
@@ -23,7 +23,7 @@ The repo now includes spec-aligned OpenClaw scaffolding under `openclaw/` so the
 - `openclaw/config/marketing-ops.config.json5` — gateway config template
 - `openclaw/workspaces/marketing-ops/` — orchestrator workspace files
 - `openclaw/workspaces/marketing-ops/businesses/nelsonai/` — NelsonAI brand/context files
-- `openclaw/workspaces/marketing-ops/skills/` — repo-shipped OpenClaw skills for brand context, publishers, analytics, notifications, and DB state
+- `openclaw/workspaces/marketing-ops/skills/` — repo-shipped OpenClaw skills for brand context, analytics, notifications, and DB state
 - `openclaw/workspaces/marketing-ops/skills/workflows/` — Lobster workflow YAML scaffolds
 
 These are templates/source-controlled assets. Copy or sync them into `~/.openclaw/` for a live install.
@@ -68,8 +68,6 @@ FACEBOOK_PAGE_ACCESS_TOKEN=
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
 TELEGRAM_WEBHOOK_SECRET=
-GEMINI_API_KEY=
-GEMINI_EMBEDDING_MODEL=
 ```
 
 These same environment values are also required by the repo-shipped OpenClaw skills under `openclaw/workspaces/marketing-ops/skills/` when you run them against a live OpenClaw install.
@@ -107,13 +105,11 @@ npm run build
 
 Marketing pages:
 
-- `/pipeline`
-- `/inbox`
+- `/queue`
 - `/items/[id]`
-- `/activity`
-- `/brands/[slug]`
 - `/calendar`
 - `/analytics`
+- `/agents-overview`
 - `/settings`
 
 Inherited OpenClaw ops pages:
@@ -133,4 +129,4 @@ Inherited OpenClaw ops pages:
 
 - If `DATABASE_URL` is missing or unreachable, the marketing pages fall back to realistic demo data so the UI remains usable.
 - Mutating API routes are protected by `ADMIN_SECRET` when it is set.
-- Voice and node/device surfaces from the upstream dashboard were removed because they are out of scope for this product.
+- Telegram is the primary interface for approvals and feedback. The dashboard is intentionally visibility-first and does not own publishing.

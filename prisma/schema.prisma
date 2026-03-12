@@ -34,9 +34,7 @@ enum ContentState {
   in_review
   revision_required
   approved
-  publishing_draft
-  draft_on_platform
-  notified
+  ready_to_post
   posted
   analyzed
   archived
@@ -88,7 +86,6 @@ model Business {
   status              BusinessStatus      @default(active)
   enabledPlatforms    Platform[]          @default([])
   postingCadence      Json                @default("{}")
-  notificationChannel String              @default("telegram")
   analyticsCadence    AnalyticsCadence    @default(weekly)
   brandProfilePath    String?
   config              Json                @default("{}")
@@ -126,18 +123,14 @@ model ContentItem {
   campaignTheme     String?               @map("campaign_theme")
   brief             Json?
   scheduledDate     DateTime?             @map("scheduled_date") @db.Date
+  suggestedTime     String?               @map("suggested_time")
   priority          Priority              @default(normal)
   currentVersionId  String?               @map("current_version_id") @db.Uuid
-  platformDraftId   String?               @map("platform_draft_id")
-  platformDraftUrl  String?               @map("platform_draft_url")
-  platformPostId    String?               @map("platform_post_id")
-  platformPostUrl   String?               @map("platform_post_url")
   boostCandidate    Boolean               @default(false) @map("boost_candidate")
   boostReason       String?               @map("boost_reason")
   briefedAt         DateTime?             @map("briefed_at") @db.Timestamptz(6)
   firstDraftAt      DateTime?             @map("first_draft_at") @db.Timestamptz(6)
   approvedAt        DateTime?             @map("approved_at") @db.Timestamptz(6)
-  publishedDraftAt  DateTime?             @map("published_draft_at") @db.Timestamptz(6)
   postedAt          DateTime?             @map("posted_at") @db.Timestamptz(6)
   analyzedAt        DateTime?             @map("analyzed_at") @db.Timestamptz(6)
   createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -164,6 +157,8 @@ model ContentVersion {
   versionNumber    Int            @map("version_number")
   body             String
   headline         String?
+  imagePrompt      String?        @map("image_prompt")
+  imageUrl         String?        @map("image_url")
   visualNotes      String?        @map("visual_notes")
   altHooks         String[]       @default([]) @map("alt_hooks")
   metadata         Json           @default("{}")

@@ -8,9 +8,7 @@ export type ContentState =
   | "in_review"
   | "revision_required"
   | "approved"
-  | "publishing_draft"
-  | "draft_on_platform"
-  | "notified"
+  | "ready_to_post"
   | "posted"
   | "analyzed"
   | "archived";
@@ -29,6 +27,9 @@ export interface BusinessProfile {
   complianceRules: string[];
   contentPillars: string[];
   enabledPlatforms?: Platform[];
+  postingCadence?: Record<string, { posts_per_week: number }>;
+  analyticsCadence?: "daily" | "weekly" | "biweekly";
+  brandProfilePath?: string | null;
 }
 
 export interface ReviewRecord {
@@ -45,19 +46,6 @@ export interface ReviewRecord {
   createdAt: string;
 }
 
-export interface VersionRecord {
-  id: string;
-  label: string;
-  versionNumber?: number;
-  wordCount: number;
-  hook: string;
-  cta: string;
-  visualNotes?: string;
-  altHooks?: string[];
-  imageCandidates?: ImageCandidate[];
-  excerpt: string;
-}
-
 export interface ImageCandidate {
   id: string;
   title: string;
@@ -69,6 +57,23 @@ export interface ImageCandidate {
   score: number;
   rationale?: string;
   selected?: boolean;
+}
+
+export interface VersionRecord {
+  id: string;
+  label: string;
+  versionNumber?: number;
+  headline?: string;
+  body: string;
+  wordCount: number;
+  hook: string;
+  cta: string;
+  imagePrompt?: string;
+  imageUrl?: string;
+  visualNotes?: string;
+  altHooks?: string[];
+  imageCandidates?: ImageCandidate[];
+  excerpt: string;
 }
 
 export interface AuditEvent {
@@ -87,6 +92,7 @@ export interface ContentItem {
   title: string;
   platform: Platform;
   scheduledDate: string | null;
+  suggestedTime: string | null;
   campaignTheme: string;
   topic: string;
   state: ContentState;
@@ -94,9 +100,6 @@ export interface ContentItem {
   brief: string;
   hook: string;
   cta: string;
-  draftUrl?: string;
-  platformUrl?: string;
-  platformPostUrl?: string;
   boostCandidate?: boolean;
   boostReason?: string;
   reviewerNote?: string;
@@ -126,10 +129,23 @@ export interface AnalyticsMetric {
   delta: string;
 }
 
+export interface AnalyticsSnapshotSummary {
+  id: string;
+  headline: string;
+  platform: Platform;
+  snapshotDate: string;
+  engagementRate?: number | null;
+  reach?: number | null;
+  impressions?: number | null;
+  clicks?: number | null;
+  insights?: string | null;
+  boostCandidate?: boolean;
+}
+
 export interface CalendarEntry {
   day: string;
   date: string;
-  items: Array<Pick<ContentItem, "id" | "title" | "platform" | "state">>;
+  items: Array<Pick<ContentItem, "id" | "title" | "platform" | "state" | "suggestedTime">>;
 }
 
 export interface SettingsCheck {
@@ -138,8 +154,34 @@ export interface SettingsCheck {
   tone: "success" | "warning" | "neutral";
 }
 
+export interface QueueGroup {
+  platform: Platform;
+  label: string;
+  items: ContentItem[];
+}
+
+export interface QueueSummary {
+  totalReady: number;
+  linkedInReady: number;
+  facebookReady: number;
+  suggestedRange: string;
+}
+
 export interface PipelineColumn {
   state: ContentState;
   label: string;
   items: ContentItem[];
+}
+
+export interface AgentOverview {
+  id: string;
+  name: string;
+  role: string;
+  model: string;
+  type: "persistent" | "sub-agent";
+  responsibilities: string[];
+  workspaceLinks: Array<{
+    label: string;
+    path: string;
+  }>;
 }

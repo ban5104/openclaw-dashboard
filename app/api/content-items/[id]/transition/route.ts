@@ -8,8 +8,8 @@ function getStateTimestampField(state: ContentState) {
   switch (state) {
     case "briefed":
       return "briefedAt";
-    case "draft_on_platform":
-      return "publishedDraftAt";
+    case "draft_ready":
+      return "firstDraftAt";
     case "approved":
       return "approvedAt";
     case "posted":
@@ -57,10 +57,6 @@ export async function POST(
 
   if (timestampField) {
     data[timestampField] = new Date();
-  }
-
-  if (nextState === "posted" && body.platformPostUrl) {
-    data.platformPostUrl = body.platformPostUrl;
   }
 
   const updated = await prisma.contentItem.update({
