@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 const fs = require('node:fs');
 const path = require('node:path');
-const { Pool } = require('pg');
 
 function parseArgs(argv) {
   const out = {};
@@ -103,7 +102,9 @@ async function resolveBusiness(pool, args) {
 async function main() {
   const args = parseArgs(process.argv);
   const workspaceRoot = resolveWorkspaceRoot();
-  const pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL }) : null;
+  const pool = process.env.DATABASE_URL
+    ? new (require('pg').Pool)({ connectionString: process.env.DATABASE_URL })
+    : null;
 
   try {
     const business = await resolveBusiness(pool, args);
@@ -112,6 +113,10 @@ async function main() {
     const compliance = readIfExists(path.join(businessDir, 'compliance.md'));
     const offers = readIfExists(path.join(businessDir, 'offers.md'));
     const audience = readIfExists(path.join(businessDir, 'audience.md'));
+    const writerNotes = readIfExists(path.join(businessDir, 'writer-notes.md'));
+    const reviewerNotes = readIfExists(path.join(businessDir, 'reviewer-notes.md'));
+    const processNotes = readIfExists(path.join(businessDir, 'process-notes.md'));
+    const strategyNotes = readIfExists(path.join(businessDir, 'strategy-notes.md'));
     const winningPosts = readIfExists(path.join(businessDir, 'examples', 'winning-posts.md'));
     const avoidedPosts = readIfExists(path.join(businessDir, 'examples', 'avoided-posts.md'));
 
@@ -133,6 +138,10 @@ async function main() {
       target_audience: audience || profileSections.target_audience || '',
       offers: offers || profileSections.offers || '',
       compliance: compliance || '',
+      writer_notes: writerNotes || '',
+      reviewer_notes: reviewerNotes || '',
+      process_notes: processNotes || '',
+      strategy_notes: strategyNotes || '',
       examples: {
         winning: winningPosts || '',
         avoided: avoidedPosts || '',
@@ -144,6 +153,10 @@ async function main() {
         compliance: path.join(businessDir, 'compliance.md'),
         offers: path.join(businessDir, 'offers.md'),
         audience: path.join(businessDir, 'audience.md'),
+        writer_notes: path.join(businessDir, 'writer-notes.md'),
+        reviewer_notes: path.join(businessDir, 'reviewer-notes.md'),
+        process_notes: path.join(businessDir, 'process-notes.md'),
+        strategy_notes: path.join(businessDir, 'strategy-notes.md'),
       },
     };
 

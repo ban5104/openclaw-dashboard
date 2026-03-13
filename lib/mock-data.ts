@@ -460,13 +460,14 @@ export const agentOverview: AgentOverview[] = [
     responsibilities: [
       "Reads content state from Postgres through db-state-manager.",
       "Triggers weekly planning and batch-ready notifications.",
-      "Learns from Ben's Telegram feedback via workspace memory.",
+      "Learns from Ben's Telegram feedback via workspace memory and business note files.",
     ],
     workspaceLinks: [
       { label: "SOUL.md", path: "/Users/ben/projects/Dashboard-OpenClaw/openclaw/workspaces/marketing-ops/SOUL.md" },
       { label: "AGENTS.md", path: "/Users/ben/projects/Dashboard-OpenClaw/openclaw/workspaces/marketing-ops/AGENTS.md" },
       { label: "HEARTBEAT.md", path: "/Users/ben/projects/Dashboard-OpenClaw/openclaw/workspaces/marketing-ops/HEARTBEAT.md" },
       { label: "USER.md", path: "/Users/ben/projects/Dashboard-OpenClaw/openclaw/workspaces/marketing-ops/USER.md" },
+      { label: "memory.md", path: "/Users/ben/projects/Dashboard-OpenClaw/openclaw/workspaces/marketing-ops/memory/memory.md" },
     ],
   },
   {
@@ -478,11 +479,12 @@ export const agentOverview: AgentOverview[] = [
     responsibilities: [
       "Writes platform-specific copy from structured briefs.",
       "Returns hooks, body, image prompt, and visual notes.",
-      "Stays within compliance rules and brand examples.",
+      "Applies durable business guidance captured from Ben's Telegram feedback.",
     ],
     workspaceLinks: [
-      { label: "content-writer template", path: "/Users/ben/projects/Dashboard-OpenClaw/openclaw/workspaces/marketing-ops/prompts/templates/content-writer.md" },
+      { label: "content-writer prompt", path: "/Users/ben/projects/Dashboard-OpenClaw/openclaw/workspaces/marketing-ops/prompts/content-writer.md" },
       { label: "linkedin rules", path: "/Users/ben/projects/Dashboard-OpenClaw/openclaw/workspaces/marketing-ops/prompts/platform/linkedin.md" },
+      { label: "writer notes", path: "/Users/ben/projects/Dashboard-OpenClaw/openclaw/workspaces/marketing-ops/businesses/nelsonai/writer-notes.md" },
     ],
   },
   {
@@ -494,11 +496,12 @@ export const agentOverview: AgentOverview[] = [
     responsibilities: [
       "Returns PASS or REVISE with specific notes.",
       "Flags low-confidence outputs for human awareness.",
-      "Protects brand fit and factual integrity.",
+      "Protects brand fit and factual integrity using durable reviewer guidance.",
     ],
     workspaceLinks: [
-      { label: "reviewer template", path: "/Users/ben/projects/Dashboard-OpenClaw/openclaw/workspaces/marketing-ops/prompts/templates/reviewer.md" },
+      { label: "reviewer prompt", path: "/Users/ben/projects/Dashboard-OpenClaw/openclaw/workspaces/marketing-ops/prompts/reviewer.md" },
       { label: "review checklist", path: "/Users/ben/projects/Dashboard-OpenClaw/openclaw/workspaces/marketing-ops/prompts/shared/review-checklist.md" },
+      { label: "reviewer notes", path: "/Users/ben/projects/Dashboard-OpenClaw/openclaw/workspaces/marketing-ops/businesses/nelsonai/reviewer-notes.md" },
     ],
   },
 ];
